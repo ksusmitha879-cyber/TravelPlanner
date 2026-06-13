@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel Itinerary Planner</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #F0F4F8; --surface: #FFFFFF; --border: #DDE3EA; --border-md: #B8C4D0;
+      --text: #0F1A24; --muted: #5A6B7A; --hint: #8A9BAA;
+      --accent: #1A6BAA; --accent-lt: #E8F2FA; --accent-dk: #0F4A7A;
+      --teal: #0E8A7A; --teal-lt: #E5F5F3;
+      --gold: #B07820; --gold-lt: #FAF3E0;
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06); --shadow-lg: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0C1018; --surface: #141820; --border: #222830; --border-md: #323848;
+        --text: #E8EFF5; --muted: #8A98A8; --hint: #5A6878;
+        --accent: #4A9ADF; --accent-lt: #0A1828; --accent-dk: #90C8FF;
+        --teal: #30C0A8; --teal-lt: #081A18;
+        --gold: #E0A840; --gold-lt: #1A1208;
+      }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+    .container { max-width: 720px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header-icon { width: 52px; height: 52px; background: var(--accent-lt); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 24px; color: var(--accent); }
+    h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .subtitle { font-size: 15px; color: var(--muted); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow); margin-bottom: 1rem; }
+    .section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hint); margin-bottom: 10px; }
+    .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 13px; font-weight: 500; color: var(--muted); }
+    input[type="text"], input[type="number"], select {
+      width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 14px; color: var(--text);
+      font-family: inherit; outline: none; transition: border-color 0.15s;
+    }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
+    input::placeholder { color: var(--hint); }
+    select option { background: var(--surface); }
+    .vibe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .vibe-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 11px; font-weight: 500; color: var(--muted); font-family: inherit; transition: all 0.15s; }
+    .vibe-btn span.icon { font-size: 22px; }
+    .vibe-btn.active { background: var(--accent-lt); border-color: var(--accent); color: var(--accent); }
+    .generate-btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.15s; }
+    .generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.65s linear infinite; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .itinerary-wrap { margin-top: 1rem; animation: fadeUp 0.3s ease; }
+    .itinerary-header { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: none; }
+    .itinerary-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .itinerary-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
+    .meta-chip { display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 10px; border-radius: 99px; font-weight: 500; }
+    .chip-blue { background: var(--accent-lt); color: var(--accent); }
+    .chip-teal { background: var(--teal-lt); color: var(--teal); }
+    .chip-gold { background: var(--gold-lt); color: var(--gold); }
+    .copy-btn { display: flex; align-items: center; gap: 5px; padding: 7px 12px; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; color: var(--muted); cursor: pointer; font-family: inherit; flex-shrink: 0; }
+    .day-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); margin-bottom: 8px; overflow: hidden; }
+    .day-card:last-child { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+    .day-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; user-select: none; background: var(--bg); }
+    .day-number { width: 32px; height: 32px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .day-title { font-size: 15px; font-weight: 600; flex: 1; }
+    .day-toggle { color: var(--hint); font-size: 18px; transition: transform 0.2s; }
+    .day-body { padding: 14px 16px; border-top: 1px solid var(--border); white-space: pre-wrap; font-size: 14px; line-height: 1.8; color: var(--text); }
+    .day-body.collapsed { display: none; }
+    .error-box { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; background: #FEF0EE; border: 1px solid #F09090; border-radius: var(--radius-md); font-size: 13px; color: #8A1A10; margin-top: 1rem; }
+    @media (prefers-color-scheme: dark) { .error-box { background: #2A1008; color: #FF9080; border-color: #8A3020; } }
+    @media (max-width: 500px) { .field-grid { grid-template-columns: 1fr; } .field.full { grid-column: 1; } .vibe-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-icon"><i class="ti ti-map-2"></i></div>
+    <h1>Smart travel planner</h1>
+    <p class="subtitle">Get a personalized day-by-day itinerary in seconds.</p>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Trip details</p>
+    <div class="field-grid">
+      <div class="field full">
+        <label>Destination</label>
+        <input type="text" id="destination" placeholder="e.g. Kyoto, Japan" />
+      </div>
+      <div class="field">
+        <label>Number of days</label>
+        <input type="number" id="days" placeholder="e.g. 3" min="1" max="14" value="3" />
+      </div>
+      <div class="field">
+        <label>Budget</label>
+        <select id="budget">
+          <option value="Low (budget traveller, free & cheap activities)">Low — Backpacker</option>
+          <option value="Medium (mid-range, mix of free and paid)" selected>Medium — Mid-range</option>
+          <option value="High (luxury, no budget constraints)">High — Luxury</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-title">Travel vibe</p>
+    <div class="vibe-grid" id="vibeGrid">
+      <button class="vibe-btn active" data-val="Historical & cultural — temples, museums, local heritage"><span class="icon">🏛️</span>Historical</button>
+      <button class="vibe-btn" data-val="Nature & adventure — hiking, outdoors, scenic views"><span class="icon">🌿</span>Nature</button>
+      <button class="vibe-btn" data-val="Food & culinary — local cuisine, markets, restaurants"><span class="icon">🍜</span>Foodie</button>
+      <button class="vibe-btn" data-val="Art & nightlife — galleries, bars, music, entertainment"><span class="icon">🎨</span>Art & Nightlife</button>
+      <button class="vibe-btn" data-val="Relaxation & wellness — spas, slow travel, scenic cafes"><span class="icon">🧘</span>Relaxation</button>
+      <button class="vibe-btn" data-val="Family friendly — kid-friendly activities and attractions"><span class="icon">👨‍👩‍👧</span>Family</button>
+    </div>
+  </div>
+
+  <button class="generate-btn" id="genBtn" onclick="generate()">
+    <i class="ti ti-map-2"></i> Plan my trip
+  </button>
+
+  <div id="errorBox" style="display:none"></div>
+  <div id="itineraryWrap" style="display:none"></div>
+</div>
+
+<script>
+  let selectedVibe = 'Historical & cultural — temples, museums, local heritage';
+
+  document.getElementById('vibeGrid').addEventListener('click', e => {
+    const btn = e.target.closest('.vibe-btn');
+    if (!btn) return;
+    document.querySelectorAll('.vibe-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedVibe = btn.dataset.val;
+  });
+
+  async function generate() {
+    const destination = document.getElementById('destination').value.trim();
+    const days = document.getElementById('days').value;
+    const budget = document.getElementById('budget').value;
+
+    if (!destination) { showError('Please enter a destination.'); return; }
+    if (!days || days < 1) { showError('Please enter a valid number of days.'); return; }
+
+    setLoading(true);
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('itineraryWrap').style.display = 'none';
+
+    const prompt = `Create a ${days}-day travel itinerary for ${destination}. Budget level: ${budget}. Travel vibe: ${selectedVibe}.
+
+Return your response as a JSON object with this exact structure:
+{
+  "title": "Trip title",
+  "destination": "${destination}",
+  "days": ${days},
+  "budget": "Low/Medium/High",
+  "vibe": "short vibe label",
+  "days_data": [
+    {
+      "day": 1,
+      "title": "Day theme title",
+      "schedule": "Full detailed schedule as a readable string with morning/afternoon/evening sections, activity names, costs, and travel tips. Use newlines for readability."
+    }
+  ],
+  "tips": "3-4 general travel tips for this destination"
+}
+
+Rules:
+- Group activities by geographical proximity to minimize travel
+- Include estimated costs where possible
+- Add one local food recommendation per day
+- Keep it realistic and practical
+- Return ONLY valid JSON, no markdown, no extra text`;
+
+    try {
+      const res = await fetch('/.netlify/functions/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      const raw = data.content.map(b => b.text || '').join('').trim();
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const itinerary = JSON.parse(clean);
+      renderItinerary(itinerary);
+    } catch (err) {
+      showError('Could not generate itinerary: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderItinerary(data) {
+    const wrap = document.getElementById('itineraryWrap');
+    const colors = ['#1A6BAA','#0E8A7A','#8A4AAA','#B07820','#CC4020','#2A7A3A'];
+
+    let html = `
+      <div class="itinerary-wrap">
+        <div class="itinerary-header">
+          <div>
+            <div class="itinerary-title">✈️ ${data.title}</div>
+            <div class="itinerary-meta">
+              <span class="meta-chip chip-blue"><i class="ti ti-map-pin" style="font-size:12px"></i>${data.destination}</span>
+              <span class="meta-chip chip-teal"><i class="ti ti-calendar" style="font-size:12px"></i>${data.days} days</span>
+              <span class="meta-chip chip-gold"><i class="ti ti-coin" style="font-size:12px"></i>${data.budget} budget</span>
+            </div>
+          </div>
+          <button class="copy-btn" onclick="copyItinerary()"><i class="ti ti-copy" style="font-size:14px"></i> Copy</button>
+        </div>`;
+
+    data.days_data.forEach((day, i) => {
+      const color = colors[i % colors.length];
+      html += `
+        <div class="day-card" style="border-left-color:${color}">
+          <div class="day-header" onclick="toggleDay(${i})">
+            <div class="day-number" style="background:${color}">${day.day}</div>
+            <div class="day-title">${day.title}</div>
+            <i class="ti ti-chevron-down day-toggle" id="toggle-${i}"></i>
+          </div>
+          <div class="day-body ${i > 0 ? 'collapsed' : ''}" id="day-body-${i}">${day.schedule}</div>
+        </div>`;
+    });
+
+    if (data.tips) {
+      html += `
+        <div class="day-card" style="border-left-color:#8A9BAA; border-radius: 0 0 var(--radius-lg) var(--radius-lg);">
+          <div class="day-header" onclick="toggleDay('tips')">
+            <div class="day-number" style="background:#8A9BAA">💡</div>
+            <div class="day-title">Travel Tips</div>
+            <i class="ti ti-chevron-down day-toggle" id="toggle-tips"></i>
+          </div>
+          <div class="day-body collapsed" id="day-body-tips">${data.tips}</div>
+        </div>`;
+    }
+
+    html += '</div>';
+    wrap.innerHTML = html;
+    wrap.style.display = 'block';
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    window._itineraryData = data;
+  }
+
+  function toggleDay(id) {
+    const body = document.getElementById(`day-body-${id}`);
+    const toggle = document.getElementById(`toggle-${id}`);
+    body.classList.toggle('collapsed');
+    toggle.style.transform = body.classList.contains('collapsed') ? '' : 'rotate(180deg)';
+  }
+
+  function copyItinerary() {
+    if (!window._itineraryData) return;
+    const d = window._itineraryData;
+    let text = `${d.title}\n${d.destination} · ${d.days} days · ${d.budget} budget\n\n`;
+    d.days_data.forEach(day => { text += `Day ${day.day}: ${day.title}\n${day.schedule}\n\n`; });
+    if (d.tips) text += `Travel Tips:\n${d.tips}`;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.innerHTML = '<i class="ti ti-check" style="font-size:14px"></i> Copied!';
+      setTimeout(() => { btn.innerHTML = '<i class="ti ti-copy" style="font-size:14px"></i> Copy'; }, 2000);
+    });
+  }
+
+  function setLoading(on) {
+    const btn = document.getElementById('genBtn');
+    btn.disabled = on;
+    btn.innerHTML = on ? '<span class="spinner"></span> Planning your trip…' : '<i class="ti ti-map-2"></i> Plan my trip';
+  }
+
+  function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.className = 'error-box';
+    box.style.display = 'flex';
+    box.innerHTML = `<i class="ti ti-alert-circle" style="font-size:16px;flex-shrink:0"></i><span>${msg}</span>`;
+  }
+</script>
+</body>
+</html>
